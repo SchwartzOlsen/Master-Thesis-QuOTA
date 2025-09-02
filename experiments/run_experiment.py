@@ -94,7 +94,7 @@ if __name__ == '__main__':
         client_type=client_type,
         model_name=model_name,
         source=source,
-        max_num_samples=max_num_samples,
+        num_samples=max_num_samples,
         random_state=RANDOM_STATE,
     )
 
