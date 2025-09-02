@@ -476,7 +476,7 @@ async def test_all_tasks(
     combined_metrics = lib.data.adjust_combined_metrics(combined_metrics, similar_metrics, reliability_metrics, multi_metrics)
 
     # Plot metrics for each task
-    fig, axes = plt.subplots(1, 3, figsize=(12, 12), subplot_kw=dict(polar=True))  # Create a 1x3 grid of polar plots
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5), subplot_kw=dict(polar=True))  # Create a 1x3 grid of polar plots
 
     axes = axes.flatten()  # Flatten the 2D array of axes for easy iteration
     metrics = [
