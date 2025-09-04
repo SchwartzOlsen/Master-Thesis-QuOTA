@@ -70,16 +70,19 @@ python run_experiment.py \
   --model_name <MODEL_ID> \
   --source <DATASET_NAME> \
   --experiment_type <EXPERIMENT_ENUM_NAME> \
-  [--max_num_samples <INT>]
+  [--max_num_samples <INT>] \
+  [--concurrency_limit <INT>]
 ```
 
 **Parameters**
 
-* `--client_type`: Choose between `OpenAI`, `Together`, `Groq`.
-* `--model_name`: model name such as `'gpt-4o-mini'`.
-* `--source` — dataset/source name. Choose between `ToolE`, `Berkeley`, `ToolLens`, `ReverseChain`.
-* `--experiment_type`: Choose between `REACT`, `REACT_SINGLE_STEP`, `REACT_WITH_CO_OCCURRENCE`, `QUOTA`, `QUOTA_WITH_REFLECTION`.
-* `--max_num_samples` **(Optional)**: positive integer to cap how many samples to run. Run the full set if omitted.
+* `--client_type` or `-c`: Choose between `OpenAI`, `Together`, `Groq`.
+* `--model_name` or `-m`: model name such as `'gpt-4o-mini'`, `gpt-4.1`, `llama-3.1-8b-instant`. What model is available depends one *client_type*.
+* `--source` or `-s`: dataset/source name. Choose between `ToolE`, `Berkeley`, `ToolLens`, `ReverseChain`.
+* `--experiment_type` or `-e`: Choose between `REACT`, `REACT_SINGLE_STEP`, `REACT_WITH_CO_OCCURRENCE`, `QUOTA`, `QUOTA_WITH_REFLECTION`.
+* `--max_num_samples` or `-n` **(Optional)**: positive integer to cap how many samples to run. Run the full set if omitted.
+* `--concurrency_limit` or `-cl` **(Optional)**: positive integer to cap how many number of concurrent tasks to run. Defaults to 32 concurrent tasks.
+
 
 If a required flag is missing or invalid, the script will raise a clear error indicating what to fix.
 
