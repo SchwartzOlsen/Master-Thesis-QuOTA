@@ -49,34 +49,42 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--experiment_type",
+        "-e",
         type=enum_by_name(lib.experiment.ExperimentSetupType),
         required=True,
         help=f"Experiment setup. Options: {', '.join([e.name for e in lib.experiment.ExperimentSetupType])}",
     )
     parser.add_argument(
         "--source",
+        "-s",
+        type=str,
         choices=VALID_SOURCES,
         required=True,
         help=f"Dataset/source. Options: {', '.join(VALID_SOURCES)}",
     )
     parser.add_argument(
         "--client_type",
+        "-c",
         type=enum_by_name(lib.agent.ClientType),
         required=True,
         help=f"Client backend. Options: {', '.join([e.name for e in lib.agent.ClientType])}",
     )
     parser.add_argument(
         "--model_name",
+        "-m",
+        type=str,
         required=True,
         help="Model name/ID to use (e.g., gpt-4.1, gpt-4o-mini, gpt-4.1-nano, llama-3.1-8b-instant, llama-3-70b, etc.)",
     )
     parser.add_argument(
         "--max_num_samples",
+        "-n",
         type=positive_int,
         help="Optional cap on number of samples (> 0).",
     )
     parser.add_argument(
         "--concurrency_limit",
+        "-cl",
         type=positive_int,
         default=32,
         help="Optional cap on number of concurrent tasks (> 0).",
