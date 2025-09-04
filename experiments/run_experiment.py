@@ -1,73 +1,97 @@
 import sys
-import getopt
 import os
+import argparse
 import matplotlib
 matplotlib.use('Agg')
 import asyncio
+from enum import Enum
 
 sys.path.append(os.path.abspath(os.path.join('..')))
 import lib
 
 RANDOM_STATE = 0
+VALID_SOURCES = ['ToolE', 'Berkeley', 'ToolLens', 'ReverseChain']
 
-### OpenAI
-# https://platform.openai.com/docs/models
-# CLIENT_TYPE = lib.agent.ClientType.OPENAI
-# MODEL_NAME = 'gpt-4o-mini'    # $0.15 • $0.6  - https://platform.openai.com/docs/models/gpt-4o-mini
-# MODEL_NAME = 'gpt-4.1-nano'   # $0.1 • $0.4   - https://platform.openai.com/docs/models/gpt-4.1-nano (NOT USED)
-# MODEL_NAME = 'gpt-4.1-mini'   # $0.4 • $1.6   - https://platform.openai.com/docs/models/gpt-4.1-mini (NOT USED)
-# MODEL_NAME = 'gpt-4.1'        # $2 • $8       - https://platform.openai.com/docs/models/gpt-4.1 (NOT USED)
+def enum_by_name(enum_cls: Enum) -> callable:
+    """
+    Create a function that converts a string to an Enum member by its .name (case-insensitive).
 
-### Groq 
-# CLIENT_TYPE = lib.agent.ClientType.GROQ
-# MODEL_NAME = 'llama-3.1-8b-instant'
-# MODEL_NAME = 'llama-3.3-70b-versatile'
+    Args:
+        enum_cls (Enum): The Enum class to create the converter for.
 
-### TogetherAI
-# CLIENT_TYPE = lib.agent.ClientType.TOGETHER
-# MODEL_NAME = 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+    Returns:
+        callable: A function that takes a string and returns the corresponding Enum member.
+    """
+
+    lookup = {e.name.lower(): e for e in enum_cls}
+    def convert(s: str):
+        key = s.strip().lower()
+        if key in lookup:
+            return lookup[key]
+        choices = ", ".join([e.name for e in enum_cls])
+        raise argparse.ArgumentTypeError(
+            f"Invalid {enum_cls.__name__}: {s}. Choose from: {choices}"
+        )
+    return convert
+
+def positive_int(s: str) -> int:
+    try:
+        v = int(s)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be an integer")
+    if v <= 0:
+        raise argparse.ArgumentTypeError("must be > 0")
+    return v
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run an experiment with the specified settings."
+    )
+    parser.add_argument(
+        "--experiment_type",
+        type=enum_by_name(lib.experiment.ExperimentSetupType),
+        required=True,
+        help=f"Experiment setup. Options: {', '.join([e.name for e in lib.experiment.ExperimentSetupType])}",
+    )
+    parser.add_argument(
+        "--source",
+        choices=VALID_SOURCES,
+        required=True,
+        help=f"Dataset/source. Options: {', '.join(VALID_SOURCES)}",
+    )
+    parser.add_argument(
+        "--client_type",
+        type=enum_by_name(lib.agent.ClientType),
+        required=True,
+        help=f"Client backend. Options: {', '.join([e.name for e in lib.agent.ClientType])}",
+    )
+    parser.add_argument(
+        "--model_name",
+        required=True,
+        help="Model name/ID to use (e.g., gpt-4.1, gpt-4o-mini, gpt-4.1-nano, llama-3.1-8b-instant, llama-3-70b, etc.)",
+    )
+    parser.add_argument(
+        "--max_num_samples",
+        type=positive_int,
+        help="Optional cap on number of samples (> 0).",
+    )
+    parser.add_argument(
+        "--concurrency_limit",
+        type=positive_int,
+        default=32,
+        help="Optional cap on number of concurrent tasks (> 0).",
+    )
+    return parser.parse_args(argv)
 
 if __name__ == '__main__':
+    args = parse_args(sys.argv[1:])
 
-    argumentList = sys.argv[1:]
-    options = "hmo:"
-    long_options = ["experiment_type=", "client_type=", "model_name=", "source=", "max_num_samples="]
-
-    experiment_type: lib.experiment.ExperimentSetupType = None
-    client_type: lib.agent.ClientType = None
-    model_name: str = None
-    source: str = None
-    max_num_samples: int = None
-    valid_sources = ['ToolE', 'Berkeley', 'ToolLens', 'ReverseChain']
-
-    try:
-        arguments, values = getopt.getopt(argumentList, options, long_options)
-        for currentArgument, currentValue in arguments:
-            if currentArgument in ("--client_type"):
-                temp_client_type = [c_type for c_type in lib.agent.ClientType if c_type.name == currentValue]
-                if temp_client_type:
-                    client_type = temp_client_type[0]
-                else:
-                    raise ValueError(f"Invalid value for client_type: {currentValue}. Valid values are: {[c_type.name for c_type in lib.agent.ClientType]}")
-            elif currentArgument in ("--model_name"):
-                model_name = currentValue
-            elif currentArgument in ("--source"):
-                if currentValue not in valid_sources:
-                    raise ValueError(f"Invalid value for source: {currentValue}. Valid values are: {valid_sources}")
-                source = currentValue
-            elif currentArgument in ("--max_num_samples"):
-                if not currentValue.isdigit():
-                    raise ValueError(f"Invalid value for max_num_samples: {currentValue}")
-                max_num_samples = int(currentValue)
-            elif currentArgument in ("--experiment_type"):
-                temp_experiment_type = [e_type for e_type in lib.experiment.ExperimentSetupType if e_type.name == currentValue]
-                if temp_experiment_type:
-                    experiment_type = temp_experiment_type[0]
-                else:
-                    raise ValueError(f"Invalid value for experiment_type: {currentValue}. Valid values are: {[e_type.name for e_type in lib.experiment.ExperimentSetupType]}")
-    except getopt.error as err:
-        print (str(err))
-        sys.exit(2)
+    experiment_type: lib.experiment.ExperimentSetupType = args.experiment_type
+    client_type: lib.agent.ClientType = args.client_type
+    model_name: str = args.model_name
+    source: str = args.source
+    max_num_samples: int = args.max_num_samples if args.max_num_samples else None
+    concurrency_limit: int = args.concurrency_limit
 
     if client_type is None:
         raise ValueError(f"Client type must be specified.")
@@ -98,10 +122,7 @@ if __name__ == '__main__':
         random_state=RANDOM_STATE,
     )
 
-    # Run experiment
-
-    concurrency_limit = 64 if client_type.value == lib.agent.ClientType.OPENAI.value else 8
-
+    # concurrency_limit = 64 if client_type.value == lib.agent.ClientType.OPENAI.value else 8
     asyncio.run(
         lib.experiment.test_all_tasks(
             react_agent,
@@ -113,6 +134,6 @@ if __name__ == '__main__':
             experiment_name=experiment_name,
             data_source=source if source is not None else "Main",
             plot_title=plot_title,
-            concurrency_limit=64
+            concurrency_limit=concurrency_limit,
         )
     )
