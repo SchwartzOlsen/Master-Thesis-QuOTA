@@ -498,7 +498,8 @@ class ToolActionQueueReflective(ToolActionQueue):
         Reflect on how well the tool selection can answer the question.
         """
         queue_descriptions = ""
-        for tool_name, _ in self.queue:
+        queue = state.queue if state is not None else self.queue
+        for tool_name, _ in queue:
             if self.tool_retriever.find_tool(tool_name) is None:
                 continue
             tool_description = self.tool_retriever.df_descriptions.loc[self.tool_retriever.df_descriptions['tool'] == tool_name, 'description'].values[0]
