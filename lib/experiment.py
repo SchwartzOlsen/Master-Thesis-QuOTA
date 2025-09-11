@@ -559,7 +559,7 @@ def get_experiment_overview(
         df = df[df['source'] == source]
 
     if llm_model is not None:
-        df = df[df['llm_model'] == llm_model]
+        df = df[df['ac_llm_name'] == llm_model]
 
     if from_date is not None:
         df = df[df[date_time_column] >= from_date]
